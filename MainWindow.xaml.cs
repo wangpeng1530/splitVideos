@@ -46,7 +46,7 @@ namespace splitVideos
 
         private void ExecuteFFmpegCommand(string command, TimeSpan totalDuration)
         {
-            string ffmpegPath = @"J:\ffmpeg-master-latest-win64-gpl-shared\bin\ffmpeg.exe";
+            string ffmpegPath = @"D:\ffmpeg-master-latest-win64-gpl-shared\bin\ffmpeg.exe";
             if (!File.Exists(ffmpegPath) && !IsInPath(ffmpegPath))
             {
                 MessageBox.Show("ffmpeg 未安装或未添加到系统 PATH 环境变量中。");
@@ -106,19 +106,34 @@ namespace splitVideos
             if (string.IsNullOrEmpty(data))
                 return;
 
+            Debug.WriteLine($"ffmpeg output: {data}");
 
             // 解析 ffmpeg 输出中的进度信息
             if (data.Contains("time="))
             {
                 var timeIndex = data.IndexOf("time=");
                 var timeString = data.Substring(timeIndex + 5, 11); // 格式为 "00:00:00.00"
+                Debug.WriteLine($"Parsed time string: {timeString}");
                 if (TimeSpan.TryParse(timeString, out TimeSpan currentTime))
                 {
                     double progress = currentTime.TotalSeconds / totalDuration.TotalSeconds * 100;
-                    Dispatcher.Invoke(() => ProgressBar.Value = progress, DispatcherPriority.Background);
+                    Debug.WriteLine($"Current time: {currentTime}, Progress: {progress}%");
+                    try
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            ProgressBar.Value = progress;
+                            Debug.WriteLine($"ProgressBar value updated to: {ProgressBar.Value}");
+                        }, DispatcherPriority.Background);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Exception in Dispatcher.Invoke: {ex.Message}");
+                    }
                 }
                 else
                 {
+                    Debug.WriteLine("Failed to parse time string.");
                 }
             }
             else
@@ -126,6 +141,8 @@ namespace splitVideos
                 Debug.WriteLine($"No time information found in data: {data}");
             }
         }
+
+
 
 
         private bool IsInPath(string fileName)
@@ -171,7 +188,7 @@ namespace splitVideos
         }
         private TimeSpan GetVideoDuration(string filePath)
         {
-            string ffmpegPath = @"J:\ffmpeg-master-latest-win64-gpl-shared\bin\ffmpeg.exe";
+            string ffmpegPath = @"D:\ffmpeg-master-latest-win64-gpl-shared\bin\ffmpeg.exe";
             if (!File.Exists(ffmpegPath) && !IsInPath(ffmpegPath))
             {
                 MessageBox.Show("ffmpeg 未安装或未添加到系统 PATH 环境变量中。");
