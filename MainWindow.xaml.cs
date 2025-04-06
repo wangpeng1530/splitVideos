@@ -44,7 +44,7 @@ namespace splitVideos
 
         }
 
-        private void ExecuteFFmpegCommand(string command, TimeSpan totalDuration)
+        private async void ExecuteFFmpegCommand(string command, TimeSpan totalDuration)
         {
             string ffmpegPath = @"D:\ffmpeg-master-latest-win64-gpl-shared\bin\ffmpeg.exe";
             if (!File.Exists(ffmpegPath) && !IsInPath(ffmpegPath))
@@ -78,13 +78,12 @@ namespace splitVideos
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
-                // 设置超时时间为 5 分钟
-                if (!process.WaitForExit(300000))
-                {
-                    process.Kill();
-                    MessageBox.Show("ffmpeg 命令超时。");
-                    return;
-                }
+                // 等待进程退出
+                await Task.Run(() => process.WaitForExit());
+
+                // 读取输出和错误流
+                string output = await process.StandardOutput.ReadToEndAsync();
+                string error = await process.StandardError.ReadToEndAsync();
 
                 if (process.ExitCode == 0)
                 {
@@ -92,7 +91,7 @@ namespace splitVideos
                 }
                 else
                 {
-                    MessageBox.Show($"剪辑失败：{process.StandardError.ReadToEnd()}");
+                    MessageBox.Show($"剪辑失败：{error}");
                 }
             }
             catch (Exception ex)
